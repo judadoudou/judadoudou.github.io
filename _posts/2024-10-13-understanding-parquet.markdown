@@ -31,7 +31,7 @@ Parquet由Twitter和Cloudera合作开发，2013年7月启动，2015年5月从Apa
 <br>Parquet将元数据放在文件末尾footer中，主要包含文件版本、schema，和每个row group中每个column chunk的位置、类型、编码方式、压缩方式、zone maps（page粒度统计指标，包含最大值、最小值、count）等信息。
 为了提高查询效率，Parquet还支持额外的Bloom Filter结构。Bloom Filter是一种空间效率很高的概率数据结构，用于快速判断某个值是否存在。Parquet支持为每个column chunk创建Bloom Filter，当查询的选取值很少时，系统通过预先检查Bloom Filter从而快速判断查询值是否存在于该columns chunk中，不存在时直接跳过该column chunk。另外，元数据中的zone maps也可以起到类似的过滤作用。
 
-<img src="/blogs/understanding-parquet.assets/parquet-layout.png">
+<img src="/assets/blogs/understanding-parquet.assets/parquet-layout.png">
 
 
 <br>
@@ -53,11 +53,11 @@ Parquet在设计上只定义了较少的物理类型，通过在物理类型上�
 Parquet对每个column chunk编码，并使用了压缩效率和读取效率都较好的编码策略：
 
   - 字典编码（Dictionary Encoding）：Parquet在所有类型的列上都首先应用了字典编码。字典编码通过构建一个字典，将原始值替换为更易于存储的形式（如从0开始的整数），从而减少数据量。Parquet根据原始值的出现顺序构建字典，当字典超过容量阈值（默认1MB）时，后续数据不再使用字典编码，直接存储为原始值。字典编码特别适用于重复值较多的数据列。
-<img src="/blogs/understanding-parquet.assets/dictionary-encoding.png">
+<img src="/assets/blogs/understanding-parquet.assets/dictionary-encoding.png">
 
   - RLE+Bitpacking：Parquet对经过字典映射后的值再进一步编码。如果一个值连续重复出现8次或以上（该值目前不可配置），Parquet将使用RLE对该column chunk编码，否则使用Bitpacking。RLE（Run-Length Encoding）和Bitpacking算法示意图如下：
-<img src="/blogs/understanding-parquet.assets/rle.png">
-<img src="/blogs/understanding-parquet.assets/bitpacking.png">
+<img src="/assets/blogs/understanding-parquet.assets/rle.png">
+<img src="/assets/blogs/understanding-parquet.assets/bitpacking.png">
 
 <br> 
 ### 块压缩
@@ -73,18 +73,18 @@ Parquet对每个column chunk编码，并使用了压缩效率和读取效率都�
 #### Dremel数据模型
 Dremel模型对每个字段定义了required/optional/repeated属性，并允许嵌套字段。Required/optional/repeated属性规定的是该字段在其父节点下允许有值的数量。例如，下图的DocId是一个required字段，则值不能为null（父节点下有且只有1个值）；Links可以为null，但一条记录中只会出现一次（父节点下有0或1个值）；Backward和Forward可以在Links中出现零至多次（父节点下有0、1，或多个值），以此类推。
 <br>下图左侧是样例数据Document的原始形式（r1, r2）和schema，右侧是在Dremel/Parquet中的实际存储形式。原始数据的每个叶子字段在实际存储中单独存为一列，并加上层级标识。层级标识使得嵌套结构的字段会额外占用一些存储空间，但上文所述的编码策略可以对其进行有效压缩；没有嵌套结构的字段（如DocId）层级标识为0。
-<img src="/blogs/understanding-parquet.assets/sample-data.png">
+<img src="/assets/blogs/understanding-parquet.assets/sample-data.png">
 
 <br>
 #### Repetition Levels
 以样例数据Document的Code字段为例。Code字段完整路径为Name.Language.Code，其中有两个repeated字段Name（第1重复层）和Language（第2重复层），因此repetition level取值范围为{0,1,2}。系统对每个字段编码时，按顺序读取原始数据。读取到'en-us'时，Code在路径中Name、Language两个可重复的字段中都没有出现过，因此r取0；读取到'en'时，Code在Language层重复，因此r取2；下一个Name中不含Language，即Name.Language.Code值为null，此时仍然认为Code出现，并在Name层重复（用null占位，以免读取下一个'en-gb'时无法判断其属于哪个Name），因此r取1，以此类推。
 <br>Dremel模型可以用树状结构表示，而repetition leve可以理解为每个叶子节点（值）在哪一层上产生分支。如下图所示，level2（完整路径为level1.level2）字段的每个数据值a-j按顺序存储为一列，R为repetition level。R = 0时从第0层（根节点）开始产生分支，R = 1时从level1产生分支，以此类推。这样，读取实际存储的level2列时，系统通过R就可以知道将每一个值组装在树状结构的哪层分支上，从而恢复原始的嵌套结构。
-<img src="/blogs/understanding-parquet.assets/rlevel-example.png">
+<img src="/assets/blogs/understanding-parquet.assets/rlevel-example.png">
 
 <br> 
 #### Definition Levels
 由于Dremel模型允许optional字段，定义definition level使系统读取字段值时知道应组装在树状结构的哪一层。如下图最后一个分支，如a.b.c字段有值，由于路径上的a, b, c均为optional/repeated，则该记录definition level为3。
-<img src="/blogs/understanding-parquet.assets/dlevel-example.png">
+<img src="/assets/blogs/understanding-parquet.assets/dlevel-example.png">
 <br> 再以样例数据的Name.Language.Country为例，系统读取到'us'时，路径上三个可选字段Name, language, country均存在，因此d取3；读取到同一个Name的下一个Language时，只有Name, Language存在，因此d取2（与repetition level类似，用null值占位）；读取到下一个Name时，只有Name存在，因此d取1。
 
 <br>
@@ -93,8 +93,8 @@ Dremel模型对每个字段定义了required/optional/repeated属性，并允许
 1.	从DocId表开始读取并组装DocId字段数据；
 2.	DocId的level为0时，跳转至Name.Language.Country表，组装Country字段；
 3.	如repetition level为1或2，则表示数据在Name或Language层有重复，需继续使用Country表组装；如repetition level为0则完成本条记录组装，进入下一次循环。
-<img src="/blogs/understanding-parquet.assets/fsm1.png">
-<img src="/blogs/understanding-parquet.assets/fsm2.png">
+<img src="/assets/blogs/understanding-parquet.assets/fsm1.png">
+<img src="/assets/blogs/understanding-parquet.assets/fsm2.png">
 
 <br><br>参考资料
 1. Dremel: A Decade of Interactive SQL Analysis at Web Scale
