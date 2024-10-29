@@ -3,6 +3,7 @@ layout: page
 title:  "理解Parquet存储格式"
 date:   2024-10-13 19:56:07 +0800
 categories: post
+image: "/assets/blogs/understanding-parquet/sample-data.png"
 ---
 
 Parquet格式是目前大数据存储的de facto standard。本文从非工程师的视角对Parquet做一个比较全面详尽的介绍，尤其详细讲解了最容易产生误解的嵌套结构部分。

@@ -2,9 +2,27 @@
 layout: default
 ---
 
-{% seo %}
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page.title }}</title>
 
-<main>
-  <h1>{{ page.title }}</h1>
-  {{ content }}
-</main>
+  <!-- 添加 Open Graph 标签 -->
+  <meta property="og:title" content="{{ page.title }}" />
+  <meta property="og:description" content="{{ page.excerpt | strip_html | normalize_whitespace }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="{{ page.url | absolute_url }}" />
+  <meta property="og:image" content="{{ page.image | absolute_url }}" />
+
+  <!-- 生成其他元数据的 SEO 标签 -->
+  {% seo %}
+</head>
+<body>
+  <main>
+    <h1>{{ page.title }}</h1>
+    {{ content }}
+  </main>
+</body>
+</html>
