@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: page
 title:  "理解Parquet存储格式"
 date:   2024-10-13 19:56:07 +0800
 categories: post

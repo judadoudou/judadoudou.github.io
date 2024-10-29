@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: page
 title:  "亮马河遛弯随笔"
 date:   2024-10-28 14:31:00 +0800
 categories: post
