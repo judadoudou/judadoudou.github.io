@@ -4,7 +4,7 @@ title: About
 permalink: /about/
 ---
 
-Welcome to Judadoudou's blog. I'm planning to post something here. 
+Welcome to Judadoudou's blog. I'm a fan of chiikawa, data science, and writing philosophically funny things.
 
 ![](/assets/chiikawa1.jpg)
 
